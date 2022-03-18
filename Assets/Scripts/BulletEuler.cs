@@ -2,16 +2,21 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BulletEuler : MonoBehaviour
+public class BulletEuler : MonoBehaviour, ICollisonableObjects
 {
     public Vector3 dir;
     public Vector3 movement = Vector3.zero;
     public float speed;
     public float verticalSpeed = 0;
+    public float radius = 0;
+    public GameObject rControl;
+    [Tooltip("Contante de restitución")]
+    public float k = 0.5f;
     // Start is called before the first frame update
     void Start()
     {
-        
+        radius = Vector2.Distance(transform.position, rControl.transform.position);
+        AddCollionableObject();
     }
 
     // Update is called once per frame
@@ -27,8 +32,43 @@ public class BulletEuler : MonoBehaviour
         transform.position += movement;
 
     }
-    private void OnTriggerEnter2D(Collider2D collision)
+
+    public void AddCollionableObject()
     {
-        print("hello");
+        ColisionControl.collisonableObjects.Add(this);
+    }
+
+    public void Collide(ICollisonableObjects collision)
+    {
+        if(collision.GetType() == TypeColision.Circle)
+        {
+            float distancia = Mathf.Sqrt(
+                (transform.position.x - collision.GetGameobject().transform.position.x) *
+                 (transform.position.x - collision.GetGameobject().transform.position.x) +
+                 (transform.position.y - collision.GetGameobject().transform.position.y) *
+                 (transform.position.y - collision.GetGameobject().transform.position.y)
+                );
+            if (distancia < radius + collision.GetRadius()) 
+            {
+                Vector3 l_dir = transform.position -collision.GetGameobject().transform.position ;
+                verticalSpeed = 0;
+                dir = k * l_dir;
+            }
+        }
+        
+    }
+
+    TypeColision ICollisonableObjects.GetType()
+    {
+        return TypeColision.Circle;
+    }
+
+    public GameObject GetGameobject()
+    {
+        return gameObject;
+    }
+    public float GetRadius()
+    {
+        return radius;
     }
 }
